@@ -1,47 +1,46 @@
 package com.company;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 
 public class Main {
+
     public static void main(String[] args) throws IOException {
         Index index = new Index();
-        String findWords = "spider,horse,cat,dog";
-        String[] nameFiles = {"testfile1.txt","testfile2.txt"};
-        for(int i=0;i<nameFiles.length;i++){
-            index.buildIndex(new File(nameFiles[i]));
-        }
+        String findWords = "this,horse,cat,dog";
+        index.buildIndex(1,10);
         index.searchFiles(Arrays.asList(findWords.split(",")));
     }
 }
  class Index{
-    Hashtable<String,List<Data>> index;
-    ArrayList<String> files;
-        Index(){
-            index = new Hashtable<>();
-            files = new ArrayList<>();
-        }
-        public void buildIndex(File file) throws IOException {
-            int fileNumber = files.indexOf(file.getPath());
+    public static ArrayList<File> allfiles = new ArrayList<File>();
+    Hashtable<String,List<Data>> index= new Hashtable<>();
+        public void buildIndex(int startIndex, int endIndex) throws IOException {
+            File[] paths = {new File("test//neg"),new File("test//pos"),new File("train//neg"),new File("train//pos"),new File("train//unsup") };
+            initAllFiles(paths);
+            int fileNumber = allfiles.indexOf(paths);
             if (fileNumber == -1) {
-                files.add(file.getPath());
-                fileNumber = files.size() - 1;
+                fileNumber = allfiles.size() - 1;
             }
-            int wordCounter=0;
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            for (String line = reader.readLine(); line != null; line = reader.readLine()){
-                for (String wordHigh : line.split("\\W+")){
-                    wordCounter++;
-                    String word = wordHigh.toLowerCase();
-                    List<Data> indexData = index.get(word);
-                    if (indexData == null) {
-                        indexData = new LinkedList<Data>();
-                        index.put(word, indexData);
+            for (int i=startIndex;i<endIndex;i++){
+                int wordCounter=0;
+                BufferedReader reader = new BufferedReader(new FileReader(allfiles.get(i)));
+                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                    for (String wordHigh : line.split("\\W+")) {
+                        wordCounter++;
+                        String word = wordHigh.toLowerCase();
+                        List<Data> indexData = index.get(word);
+                        if (indexData == null) {
+                            indexData = new LinkedList<Data>();
+                            index.put(word, indexData);
+                        }
+                        indexData.add(new Data(fileNumber, wordCounter));
                     }
-                    indexData.add(new Data(fileNumber, wordCounter));
                 }
+            System.out.println("indexed " + allfiles.get(i) + " " + wordCounter + " words");
             }
-            System.out.println("indexed " + file.getName() + " " + wordCounter + " words");
         }
      public void searchFiles(List<String> words) {
          for (String wordHigh : words) {
@@ -50,10 +49,18 @@ public class Main {
              System.out.print(word);
              if (filesWithWord != null) {
                  for (Data t : filesWithWord) {
-                     System.out.print(" позиция "+ t.positionWord+" в файле: "+files.get(t.fileNumber));
+                     System.out.print(" позиция "+ t.positionWord+" в файле: "+allfiles.get(t.fileNumber));
                  }
              }
             System.out.println("");
+         }
+     }
+     private static void initAllFiles(File[] paths) {
+         for (File path : paths) {
+             if (path.isDirectory()) {
+                 File[] files = path.listFiles();
+                 allfiles.addAll(Arrays.asList(files));
+             }
          }
      }
 }
