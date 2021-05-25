@@ -44,17 +44,16 @@ public class Main {
                 .filter(Files::isRegularFile)
                 .map(Path::toFile)
                 .collect(Collectors.toList());
-        System.out.println(filesInFolder);
     }
 }
  class Index extends Thread{
      int startIndex;
      int endIndex;
      List<File> filesInFolder;
-    Index(List<File> allfiles, int startIndex, int endIndex){
+    Index(List<File> filesInFolder, int startIndex, int endIndex){
         this.startIndex = startIndex;
         this.endIndex =endIndex;
-        this.filesInFolder = allfiles;
+        this.filesInFolder = filesInFolder;
     }
         public void run(){
             for (int i=startIndex;i<endIndex;i++){
