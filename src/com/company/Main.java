@@ -12,31 +12,52 @@ import java.util.stream.Collectors;
 
 public class Main {
     public static List<File> filesInFolder = new ArrayList<File>();
-    public static Hashtable<String,ArrayList<Data>> index = new Hashtable<String,ArrayList<Data>>();
+    public static Hashtable<String,ArrayList<Integer>> index = new Hashtable<String,ArrayList<Integer>>();
     public static String findWords = new String();
-    public static ArrayList<List<File>> getResult = new ArrayList<>();
-    private static final int NUMBER_THREADS = 4;
+    public static ArrayList<List<File>> getResult;
+    public static ArrayList<List<File>> Result;
+    private static final int NUMBER_THREADS = 1;
     public static void main(String[] args) throws IOException, InterruptedException {
         filesInFolder();
+//        Index index = new Index(filesInFolder,1,10);
+//        index.run();
         indexThread();
-        //Server();
-        String findWords = "today we met him";
-        searchFiles(Arrays.asList(findWords.split("\\W+")));
+        Server();
+//        String findWords = "today we met him";
+//        searchFiles(Arrays.asList(findWords.split("\\W+")));
     }
     public static void Server() throws IOException {
         try (var listener = new ServerSocket(59090)) {
             System.out.println("The date server is running...");
             while (true) {
-                try (var socket = listener.accept()) {
-                    System.out.println("New client has been accepted.");
-                    var in = new Scanner(socket.getInputStream());
-                    var out = new PrintWriter(socket.getOutputStream(), true);
-                    if (in.hasNext()) {
-                        System.out.println("New massage.");
-                        findWords = in.nextLine();
-                        searchFiles(Arrays.asList(findWords.split("\\W+")));
-                        out.println(getResult);
-                    }
+                try{
+                    var socket = listener.accept();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            System.out.println("New client has been accepted.");
+                            try(var in = new Scanner(socket.getInputStream());
+                            var out = new PrintWriter(socket.getOutputStream(), true);) {
+                                if (in.hasNext()) {
+                                    System.out.println("New massage.");
+                                    findWords = in.nextLine();
+                                    searchFiles(Arrays.asList(findWords.split("\\W+")));
+                                    out.println(Result.get(0));
+                                }
+                            }catch (IOException e){
+                                e.printStackTrace();
+                            }
+                           finally {
+                                try {
+                                    socket.close();
+                                }catch (IOException e){
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }).start();
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         }
@@ -53,23 +74,28 @@ public class Main {
         }
     }
     public static void searchFiles(List<String> words) {
+        getResult = new ArrayList<>();
+        Result = new ArrayList<>();
         for (String wordHigh : words) {
             List<File> filesForWord = new ArrayList<>();
             String word = wordHigh.toLowerCase();
-            List<Data> filesWithWord = index.get(word);
+            List<Integer> filesWithWord = index.get(word);
             System.out.print(word+":");
             if (filesWithWord != null) {
-                for (Data t : filesWithWord) {
-                    filesForWord.add(filesInFolder.get(t.fileNumber));
+                for (Integer t : filesWithWord) {
+                    filesForWord.add(filesInFolder.get(t));
                 }
             }
             getResult.add(filesForWord);
             System.out.println("");
         }
-        for(int i=0;i<getResult.size()-1;i++){
-            getResult.get(i).retainAll(getResult.get(i+1));
+        System.out.println("size "+getResult.size());
+        Result.add(getResult.get(0));
+        for(int i=1;i<getResult.size();i++){
+            Result.get(0).retainAll(getResult.get(i));
+            //System.out.println("--"+i);
         }
-        System.out.println(getResult.get(0));
+
 
     }
     private static void filesInFolder() throws IOException {
@@ -80,7 +106,7 @@ public class Main {
     }
 }
  class Index extends Thread{
-     public static List<Data> indexData;
+     public static ArrayList<Integer> indexData;
      int startIndex;
      int endIndex;
      List<File> filesInFolder;
@@ -92,9 +118,6 @@ public class Main {
         public void run(){
             for (int i=startIndex;i<endIndex;i++){
                 int fileNumber = filesInFolder.indexOf(filesInFolder.get(i));
-                if (fileNumber == -1) {
-                    fileNumber = filesInFolder.size() - 1;
-                }
                 int wordCounter=0;
                 BufferedReader reader = null;
                 try {
@@ -104,31 +127,27 @@ public class Main {
                 }
                 try {
                     for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                        line = line.replaceAll("<br /><br />","");
                         for (String wordHigh : line.split("\\W+")) {
                             wordCounter++;
                             String word = wordHigh.toLowerCase();
-                            word.replaceAll("<br /><br />","");
-                            ArrayList<Data> indexData = Main.index.get(word);
-                            if (indexData == null) {
+                            indexData = Main.index.get(word);
+                            //System.out.println("------1 --"+indexData);
+                            if (/*indexData == null*/!Main.index.containsKey(word)) {
                                 indexData = new ArrayList<>();
+                                //System.out.println("------2 --"+indexData);
                                 Main.index.put(word, indexData);
+                               // System.out.println("------3 --"+Main.index.size());
                             }
-                            indexData.add(new Data(fileNumber, wordCounter));
+                            indexData.add(fileNumber);
+                           // System.out.println("------4 --"+indexData);
                         }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("indexed " + filesInFolder.get(i) + " " + wordCounter + " words");
+                System.out.println("filename " + filesInFolder.get(i) + " " + wordCounter + " words");
             }
         }
 
-}
-class Data{
-     int fileNumber;
-     int positionWord;
-    public Data(int fileNumber, int positionWord) {
-        this.fileNumber = fileNumber;
-        this.positionWord = positionWord;
-    }
 }
