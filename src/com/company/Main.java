@@ -14,17 +14,31 @@ public class Main {
     public static List<File> filesInFolder = new ArrayList<File>();
     public static Hashtable<String,ArrayList<Data>> index = new Hashtable<String,ArrayList<Data>>();
     public static String findWords = new String();
-
+    public static HashMap<String,List<File>> getResult = new HashMap<>();
     private static final int NUMBER_THREADS = 4;
     public static void main(String[] args) throws IOException, InterruptedException {
         filesInFolder();
         indexThread();
-        //Server();
-        String findWords = "Hello,my,name,Denis";
-        searchFiles(Arrays.asList(findWords.split(",")));
-
+        Server();
     }
-
+    public static void Server() throws IOException {
+        try (var listener = new ServerSocket(59090)) {
+            System.out.println("The date server is running...");
+            while (true) {
+                try (var socket = listener.accept()) {
+                    System.out.println("New client has been accepted.");
+                    var in = new Scanner(socket.getInputStream());
+                    var out = new PrintWriter(socket.getOutputStream(), true);
+                    if (in.hasNext()) {
+                        System.out.println("New massage.");
+                        findWords = in.nextLine();
+                        searchFiles(Arrays.asList(findWords.split(",")));
+                        out.println(getResult);
+                    }
+                }
+            }
+        }
+    }
     public static void indexThread() throws InterruptedException{
         Index[] indexThread = new Index[NUMBER_THREADS];
         for (int i = 0; i < NUMBER_THREADS; i++) {
@@ -37,15 +51,17 @@ public class Main {
         }
     }
     public static void searchFiles(List<String> words) {
+        List<File> filesForWord = new ArrayList<>();
         for (String wordHigh : words) {
             String word = wordHigh.toLowerCase();
             List<Data> filesWithWord = index.get(word);
             System.out.print(word+":");
             if (filesWithWord != null) {
                 for (Data t : filesWithWord) {
-                    System.out.print(" "+filesInFolder.get(t.fileNumber)+" ("+t.positionWord+");");
+                    filesForWord.add(filesInFolder.get(t.fileNumber));
                 }
             }
+            getResult.put(word,filesForWord);
             System.out.println("");
         }
     }
