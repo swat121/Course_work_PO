@@ -14,12 +14,14 @@ public class Main {
     public static List<File> filesInFolder = new ArrayList<File>();
     public static Hashtable<String,ArrayList<Data>> index = new Hashtable<String,ArrayList<Data>>();
     public static String findWords = new String();
-    public static HashMap<String,List<File>> getResult = new HashMap<>();
+    public static ArrayList<List<File>> getResult = new ArrayList<>();
     private static final int NUMBER_THREADS = 4;
     public static void main(String[] args) throws IOException, InterruptedException {
         filesInFolder();
         indexThread();
-        Server();
+        //Server();
+        String findWords = "today we met him";
+        searchFiles(Arrays.asList(findWords.split("\\W+")));
     }
     public static void Server() throws IOException {
         try (var listener = new ServerSocket(59090)) {
@@ -32,7 +34,7 @@ public class Main {
                     if (in.hasNext()) {
                         System.out.println("New massage.");
                         findWords = in.nextLine();
-                        searchFiles(Arrays.asList(findWords.split(",")));
+                        searchFiles(Arrays.asList(findWords.split("\\W+")));
                         out.println(getResult);
                     }
                 }
@@ -51,8 +53,8 @@ public class Main {
         }
     }
     public static void searchFiles(List<String> words) {
-        List<File> filesForWord = new ArrayList<>();
         for (String wordHigh : words) {
+            List<File> filesForWord = new ArrayList<>();
             String word = wordHigh.toLowerCase();
             List<Data> filesWithWord = index.get(word);
             System.out.print(word+":");
@@ -61,9 +63,14 @@ public class Main {
                     filesForWord.add(filesInFolder.get(t.fileNumber));
                 }
             }
-            getResult.put(word,filesForWord);
+            getResult.add(filesForWord);
             System.out.println("");
         }
+        for(int i=0;i<getResult.size()-1;i++){
+            getResult.get(i).retainAll(getResult.get(i+1));
+        }
+        System.out.println(getResult.get(0));
+
     }
     private static void filesInFolder() throws IOException {
         filesInFolder = Files.walk(Paths.get("dataset"))

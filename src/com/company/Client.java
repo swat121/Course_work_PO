@@ -19,7 +19,6 @@ public class Client {
                 System.out.print("Print your massage: ");
                 String line = sc.nextLine();
                 out.println(line);
-
                 while (in.hasNext()) {
                     System.out.println(in.nextLine());
                 }
