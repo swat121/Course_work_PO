@@ -1,18 +1,31 @@
 package com.company;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Main {
     public static List<File> filesInFolder = new ArrayList<File>();
-    public static Hashtable<String,List<Data>> index = new Hashtable<String,List<Data>>();
+    public static Hashtable<String,ArrayList<Data>> index = new Hashtable<String,ArrayList<Data>>();
+    public static String findWords = new String();
+
     private static final int NUMBER_THREADS = 4;
     public static void main(String[] args) throws IOException, InterruptedException {
         filesInFolder();
+        indexThread();
+        //Server();
+        String findWords = "Hello,my,name,Denis";
+        searchFiles(Arrays.asList(findWords.split(",")));
+
+    }
+
+    public static void indexThread() throws InterruptedException{
         Index[] indexThread = new Index[NUMBER_THREADS];
         for (int i = 0; i < NUMBER_THREADS; i++) {
             indexThread[i] = new Index(filesInFolder, filesInFolder.size() / NUMBER_THREADS * i,
@@ -22,9 +35,6 @@ public class Main {
         for (int i = 0; i < NUMBER_THREADS; i++) {
             indexThread[i].join();
         }
-        String findWords = "horse,cat,dog,gtrsdf";
-        searchFiles(Arrays.asList(findWords.split(",")));
-
     }
     public static void searchFiles(List<String> words) {
         for (String wordHigh : words) {
@@ -33,7 +43,7 @@ public class Main {
             System.out.print(word+":");
             if (filesWithWord != null) {
                 for (Data t : filesWithWord) {
-                    System.out.print(/*" позиция "+ t.positionWord+" в файле: "+*/" " +filesInFolder.get(t.fileNumber)+"; ");
+                    System.out.print(" "+filesInFolder.get(t.fileNumber)+" ("+t.positionWord+");");
                 }
             }
             System.out.println("");
@@ -47,6 +57,7 @@ public class Main {
     }
 }
  class Index extends Thread{
+     public static List<Data> indexData;
      int startIndex;
      int endIndex;
      List<File> filesInFolder;
@@ -58,7 +69,6 @@ public class Main {
         public void run(){
             for (int i=startIndex;i<endIndex;i++){
                 int fileNumber = filesInFolder.indexOf(filesInFolder.get(i));
-                //int fileNumber = i;
                 if (fileNumber == -1) {
                     fileNumber = filesInFolder.size() - 1;
                 }
@@ -74,9 +84,10 @@ public class Main {
                         for (String wordHigh : line.split("\\W+")) {
                             wordCounter++;
                             String word = wordHigh.toLowerCase();
-                            List<Data> indexData = Main.index.get(word);
+                            word.replaceAll("<br /><br />","");
+                            ArrayList<Data> indexData = Main.index.get(word);
                             if (indexData == null) {
-                                indexData = new LinkedList<Data>();
+                                indexData = new ArrayList<>();
                                 Main.index.put(word, indexData);
                             }
                             indexData.add(new Data(fileNumber, wordCounter));
