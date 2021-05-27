@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class Main {
+public class Server {
     public static List<File> filesInFolder = new ArrayList<>();
     public static ConcurrentHashMap<String, List<Integer>> index = new ConcurrentHashMap<>();
     public static String findWords = new String();
@@ -83,9 +83,9 @@ public class Main {
     }
 
     public static void indexThread() throws InterruptedException {
-        Index[] indexThread = new Index[NUMBER_THREADS];
+        InvertedIndex[] indexThread = new InvertedIndex[NUMBER_THREADS];
         for (int i = 0; i < NUMBER_THREADS; i++) {
-            indexThread[i] = new Index(filesInFolder, filesInFolder.size() / NUMBER_THREADS * i,
+            indexThread[i] = new InvertedIndex(filesInFolder, filesInFolder.size() / NUMBER_THREADS * i,
                     i == (NUMBER_THREADS - 1) ? filesInFolder.size() : filesInFolder.size() / NUMBER_THREADS * (i + 1), stopWords);
             indexThread[i].start();
         }
@@ -114,9 +114,6 @@ public class Main {
         for (int i = 1; i < getResult.size(); i++) {
             Result.get(0).retainAll(getResult.get(i));
         }
-        System.out.println(Result);
-        System.out.println(getResult);
-
     }
 
     private static void filesInFolder() throws IOException {
@@ -127,58 +124,3 @@ public class Main {
     }
 }
 
-class Index extends Thread {
-    List<Integer> indexData;
-    int startIndex;
-    int endIndex;
-    List<File> filesInFolder;
-    List<String> stopWords;
-
-    Index(List<File> filesInFolder, int startIndex, int endIndex, List<String> stopWords) {
-        this.startIndex = startIndex;
-        this.endIndex = endIndex;
-        this.filesInFolder = filesInFolder;
-        this.stopWords = stopWords;
-    }
-
-    public void run() {
-
-        for (int i = startIndex; i < endIndex; i++) {
-            int fileNumber = filesInFolder.indexOf(filesInFolder.get(i));
-            int wordCounter = 0;
-            BufferedReader reader = null;
-            try {
-                reader = new BufferedReader(new FileReader(filesInFolder.get(i)));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            try {
-                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    line = line.replaceAll("<.*?>", "")
-                            .replaceAll("[^A-Za-z\\s]", "")
-                            .replaceAll(" +", " ");
-                    for (String wordHigh : line.split("\\W+")) {
-                        wordCounter++;
-                        String word = wordHigh.toLowerCase();
-                        if (stopWords.contains(word))
-                            continue;
-                        if (!Main.index.containsKey(word)) {
-                            indexData = new ArrayList<>();
-                            //Слово с соответствующим пустым списком файлов
-                            Main.index.put(word, indexData);
-                        } else {
-                            indexData = Main.index.get(word);
-                        }
-                        //добавляем текущий файл к слову word
-                        indexData.add(fileNumber);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            System.out.println("filename " + filesInFolder.get(i) + " " + wordCounter + " words");
-        }
-    }
-
-
-}
