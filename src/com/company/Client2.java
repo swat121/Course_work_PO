@@ -15,7 +15,7 @@ public class Client2 {
             try (var in = new Scanner(socket.getInputStream());
                  var out = new PrintWriter(socket.getOutputStream(), true)) {
                 Scanner sc = new Scanner(System.in);
-                System.out.print("Print your massage: ");
+                System.out.print("Print your message: ");
                 String line = sc.nextLine();
                 out.println(line);
                 while (in.hasNext()) {

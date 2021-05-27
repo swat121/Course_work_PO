@@ -6,25 +6,28 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Main {
     public static List<File> filesInFolder = new ArrayList<>();
-    public static Hashtable<String,List<Integer>> index = new Hashtable<>();
+    public static ConcurrentHashMap<String,List<Integer>> index = new ConcurrentHashMap<>();
     public static String findWords = new String();
     public static ArrayList<List<File>> Result;
     public static List<String> stopWords =  stopWords();
-    private static final int NUMBER_THREADS = 1;
+    private static final int NUMBER_THREADS =4;
     public static void main(String[] args) throws IOException, InterruptedException {
         filesInFolder();
-//        Index index = new Index(filesInFolder,1,10);
-//        index.run();
-        indexThread();
+            Instant start = Instant.now();
+            indexThread();
+            Instant finish = Instant.now();
+            System.out.println("Time: "+"потоков "+NUMBER_THREADS+" " + Duration.between(start, finish).toMillis() + " ms");
+
+
         Server();
-//        String findWords = "today we met him";
-//        searchFiles(Arrays.asList(findWords.split("\\W+")));
     }
     public static List<String> stopWords(){
         List<String> words = new ArrayList<>();
@@ -53,9 +56,11 @@ public class Main {
                             try(var in = new Scanner(socket.getInputStream());
                             var out = new PrintWriter(socket.getOutputStream(), true);) {
                                 if (in.hasNext()) {
-                                    System.out.println("New massage.");
+                                    System.out.println("New message.");
                                     findWords = in.nextLine();
-                                    searchFiles(Arrays.asList(findWords.split("\\W+")));
+                                    searchFiles(Arrays.asList(findWords.replaceAll("<.*?>", "")
+                                            .replaceAll("[^A-Za-z\\s]", "")
+                                            .replaceAll(" +", " ").split("\\W+")));
                                     out.println(Result.get(0));
                                 }
                             }catch (IOException e){
@@ -120,7 +125,6 @@ public class Main {
 }
  class Index extends Thread{
      List<Integer> indexData;
-
      int startIndex;
      int endIndex;
      List<File> filesInFolder;
@@ -144,14 +148,16 @@ public class Main {
                 }
                 try {
                     for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                        line = line.replaceAll("<br /><br />","");
+                        line = line.replaceAll("<.*?>", "")
+                                .replaceAll("[^A-Za-z\\s]", "")
+                                .replaceAll(" +", " ");
                         for (String wordHigh : line.split("\\W+")) {
                             wordCounter++;
                             String word = wordHigh.toLowerCase();
                             if (stopWords.contains(word))
                                 continue;
                             if (!Main.index.containsKey(word)) {
-                                indexData = new LinkedList<>();
+                                indexData = new ArrayList<>();
                                 //Слово с соответствующим пустым списком файлов
                                 Main.index.put(word, indexData);
                             }else{
