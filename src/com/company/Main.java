@@ -11,11 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Main {
-    public static List<File> filesInFolder = new ArrayList<File>();
-    public static Hashtable<String,ArrayList<Integer>> index = new Hashtable<String,ArrayList<Integer>>();
+    public static List<File> filesInFolder = new ArrayList<>();
+    public static Hashtable<String,List<Integer>> index = new Hashtable<>();
     public static String findWords = new String();
-    public static ArrayList<List<File>> getResult;
     public static ArrayList<List<File>> Result;
+    public static List<String> stopWords =  stopWords();
     private static final int NUMBER_THREADS = 1;
     public static void main(String[] args) throws IOException, InterruptedException {
         filesInFolder();
@@ -25,6 +25,20 @@ public class Main {
         Server();
 //        String findWords = "today we met him";
 //        searchFiles(Arrays.asList(findWords.split("\\W+")));
+    }
+    public static List<String> stopWords(){
+        List<String> words = new ArrayList<>();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("stop_words_list.txt"));
+            for (String line = reader.readLine(); line != null; line = reader.readLine()){
+                for (String word : line.split("\\W+")){
+                    words.add(word);
+                }
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+        return words;
     }
     public static void Server() throws IOException {
         try (var listener = new ServerSocket(59090)) {
@@ -66,7 +80,7 @@ public class Main {
         Index[] indexThread = new Index[NUMBER_THREADS];
         for (int i = 0; i < NUMBER_THREADS; i++) {
             indexThread[i] = new Index(filesInFolder, filesInFolder.size() / NUMBER_THREADS * i,
-                    i == (NUMBER_THREADS - 1) ? filesInFolder.size() : filesInFolder.size() / NUMBER_THREADS * (i + 1));
+                    i == (NUMBER_THREADS - 1) ? filesInFolder.size() : filesInFolder.size() / NUMBER_THREADS * (i + 1), stopWords);
             indexThread[i].start();
         }
         for (int i = 0; i < NUMBER_THREADS; i++) {
@@ -74,28 +88,27 @@ public class Main {
         }
     }
     public static void searchFiles(List<String> words) {
-        getResult = new ArrayList<>();
+        ArrayList<List<File>> getResult = new ArrayList<>();
         Result = new ArrayList<>();
         for (String wordHigh : words) {
             List<File> filesForWord = new ArrayList<>();
             String word = wordHigh.toLowerCase();
+            if (stopWords.contains(word))
+                continue;
             List<Integer> filesWithWord = index.get(word);
-            System.out.print(word+":");
             if (filesWithWord != null) {
                 for (Integer t : filesWithWord) {
                     filesForWord.add(filesInFolder.get(t));
                 }
             }
             getResult.add(filesForWord);
-            System.out.println("");
         }
-        System.out.println("size "+getResult.size());
         Result.add(getResult.get(0));
         for(int i=1;i<getResult.size();i++){
             Result.get(0).retainAll(getResult.get(i));
-            //System.out.println("--"+i);
         }
-
+        System.out.println(Result);
+        System.out.println(getResult);
 
     }
     private static void filesInFolder() throws IOException {
@@ -106,16 +119,20 @@ public class Main {
     }
 }
  class Index extends Thread{
-     public static ArrayList<Integer> indexData;
+     List<Integer> indexData;
+
      int startIndex;
      int endIndex;
      List<File> filesInFolder;
-    Index(List<File> filesInFolder, int startIndex, int endIndex){
+     List<String> stopWords;
+    Index(List<File> filesInFolder, int startIndex, int endIndex, List<String> stopWords){
         this.startIndex = startIndex;
         this.endIndex =endIndex;
         this.filesInFolder = filesInFolder;
+        this.stopWords = stopWords;
     }
         public void run(){
+
             for (int i=startIndex;i<endIndex;i++){
                 int fileNumber = filesInFolder.indexOf(filesInFolder.get(i));
                 int wordCounter=0;
@@ -131,16 +148,17 @@ public class Main {
                         for (String wordHigh : line.split("\\W+")) {
                             wordCounter++;
                             String word = wordHigh.toLowerCase();
-                            indexData = Main.index.get(word);
-                            //System.out.println("------1 --"+indexData);
-                            if (/*indexData == null*/!Main.index.containsKey(word)) {
-                                indexData = new ArrayList<>();
-                                //System.out.println("------2 --"+indexData);
+                            if (stopWords.contains(word))
+                                continue;
+                            if (!Main.index.containsKey(word)) {
+                                indexData = new LinkedList<>();
+                                //Слово с соответствующим пустым списком файлов
                                 Main.index.put(word, indexData);
-                               // System.out.println("------3 --"+Main.index.size());
+                            }else{
+                                indexData = Main.index.get(word);
                             }
+                            //добавляем текущий файл к слову word
                             indexData.add(fileNumber);
-                           // System.out.println("------4 --"+indexData);
                         }
                     }
                 } catch (IOException e) {
@@ -149,5 +167,6 @@ public class Main {
                 System.out.println("filename " + filesInFolder.get(i) + " " + wordCounter + " words");
             }
         }
+
 
 }
