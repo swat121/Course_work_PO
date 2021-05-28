@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -31,28 +30,30 @@ public class IndexService {
         Instant finish = Instant.now();
         System.out.println("Time: " + Duration.between(start, finish).toMillis() + " ms");
     }
-    public List<File> searchFiles(List<String> words) {
+    public Object searchFiles(List<String> words) {
         ArrayList<List<File>> listOfFoundFiles = new ArrayList<>();
         ArrayList<List<File>> Result = new ArrayList<>();
         for (String rawWords : words) {
             List<File> filesForWord = new ArrayList<>();
             String word = rawWords.toLowerCase();
-            if (stopWords.contains(word))
-                continue;
-            List<Integer> filesWithWord = index.get(word);
-            if (filesWithWord != null) {
-                for (Integer fileNumber : filesWithWord) {
-                    filesForWord.add(filePath.get(fileNumber));
+                List<Integer> filesWithWord = index.get(word);
+                if (filesWithWord != null) {
+                    for (Integer fileNumber : filesWithWord) {
+                        filesForWord.add(filePath.get(fileNumber));
+                        listOfFoundFiles.add(filesForWord);
+                    }
                 }
+        }
+        if(listOfFoundFiles.size()!=0){
+            Result.add(listOfFoundFiles.get(0));
+            for (int i = 1; i < listOfFoundFiles.size(); i++) {
+                Result.get(0).retainAll(listOfFoundFiles.get(i));
             }
-            listOfFoundFiles.add(filesForWord);
+            return Result.get(0);
+        }else {
+            System.out.println("No files found");
+            return "No files found";
         }
-        System.out.println(listOfFoundFiles);
-        Result.add(listOfFoundFiles.get(0));
-        for (int i = 1; i < listOfFoundFiles.size(); i++) {
-            Result.get(0).retainAll(listOfFoundFiles.get(i));
-        }
-        return Result.get(0);
     }
 
     private static void readFilesInFolder() throws IOException {
