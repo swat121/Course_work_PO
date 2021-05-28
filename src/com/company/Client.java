@@ -7,8 +7,8 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
-    public static final int PORT = 59090;
-    public static final String HOST = "localhost";
+    private static final int PORT = 59090;
+    private static final String HOST = "localhost";
     public static void main(String[] args) {
         Socket socket = null;
         try{

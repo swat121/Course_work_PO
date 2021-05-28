@@ -19,7 +19,7 @@ public class Server {
         indexService.runBuild();
         runServer();
     }
-    public static void runServer() throws IOException {
+    private static void runServer() throws IOException {
         try (var listener = new ServerSocket(59090)) {
             System.out.println("The date server is running...");
             while (true) {

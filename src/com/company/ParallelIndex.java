@@ -6,11 +6,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ParallelIndex extends Thread {
     ConcurrentHashMap<String, List<Integer>> index;
-    int startFileIndex;
-    int endFileIndex;
-    List<File> filePath;
-    List<String> stopWords;
-    InvertedIndex invertedIndex = new InvertedIndex();
+    private int startFileIndex;
+    private int endFileIndex;
+    private List<File> filePath;
+    private List<String> stopWords;
+    private InvertedIndex invertedIndex = new InvertedIndex();
 
     ParallelIndex(List<File> filePath, int startFileIndex, int endFileIndex, List<String> stopWords,ConcurrentHashMap<String, List<Integer>> index) {
         this.filePath = filePath;
@@ -18,9 +18,6 @@ public class ParallelIndex extends Thread {
         this.endFileIndex = endFileIndex;
         this.stopWords = stopWords;
         this.index = index;
-    }
-    public ConcurrentHashMap<String, List<Integer>> getIndex(){
-        return index;
     }
 
     @Override

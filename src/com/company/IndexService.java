@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class IndexService {
-    public static List<String> stopWords = readStopWords();
-    public static ConcurrentHashMap<String, List<Integer>> index = new ConcurrentHashMap<>();
-    public static String stopWordsPath = "stop_words_list.txt";
-    public static String datasetDirectoryPath = "dataset";
-    public static int NUMBER_THREADS =4;
-    public static List<File> filePath = new ArrayList<>();
+    private static final List<String> stopWords = readStopWords();
+    private static ConcurrentHashMap<String, List<Integer>> index = new ConcurrentHashMap<>();
+    private static final String stopWordsPath = "stop_words_list.txt";
+    private static final String datasetDirectoryPath = "dataset";
+    private static final int NUMBER_THREADS =1;
+    private static List<File> filePath = new ArrayList<>();
 
     public void runBuild() throws IOException, InterruptedException {
         readFilesInFolder();
@@ -47,6 +47,7 @@ public class IndexService {
             }
             listOfFoundFiles.add(filesForWord);
         }
+        System.out.println(listOfFoundFiles);
         Result.add(listOfFoundFiles.get(0));
         for (int i = 1; i < listOfFoundFiles.size(); i++) {
             Result.get(0).retainAll(listOfFoundFiles.get(i));
@@ -60,7 +61,7 @@ public class IndexService {
                 .map(Path::toFile)
                 .collect(Collectors.toList());
     }
-    public static List<String> readStopWords() {
+    private static List<String> readStopWords() {
         List<String> words = new ArrayList<>();
         try {
             BufferedReader reader = new BufferedReader(new FileReader("stop_words_list.txt"));
@@ -72,7 +73,7 @@ public class IndexService {
         }
         return words;
     }
-    public static void buildParallelIndex() throws InterruptedException {
+    private static void buildParallelIndex() throws InterruptedException {
         ParallelIndex[] parallelIndices = new ParallelIndex[NUMBER_THREADS];
         for (int i = 0; i < NUMBER_THREADS; i++) {
             parallelIndices[i] = new ParallelIndex(filePath, filePath.size() / NUMBER_THREADS * i,
