@@ -33,24 +33,29 @@ public class IndexService {
     public Object searchFiles(List<String> words) {
         ArrayList<List<File>> listOfFoundFiles = new ArrayList<>();
         ArrayList<List<File>> Result = new ArrayList<>();
+        List<File> filesForWord = new ArrayList<>();
         for (String rawWords : words) {
-            List<File> filesForWord = new ArrayList<>();
+            filesForWord = new ArrayList<>();
             String word = rawWords.toLowerCase();
+            if (!stopWords.contains(word)) {
                 List<Integer> filesWithWord = index.get(word);
                 if (filesWithWord != null) {
                     for (Integer fileNumber : filesWithWord) {
                         filesForWord.add(filePath.get(fileNumber));
-                        listOfFoundFiles.add(filesForWord);
                     }
                 }
+            } else {
+                continue;
+            }
+            listOfFoundFiles.add(filesForWord);
         }
-        if(listOfFoundFiles.size()!=0){
+        if (filesForWord.size() != 0) {
             Result.add(listOfFoundFiles.get(0));
             for (int i = 1; i < listOfFoundFiles.size(); i++) {
                 Result.get(0).retainAll(listOfFoundFiles.get(i));
             }
             return Result.get(0);
-        }else {
+        } else {
             System.out.println("No files found");
             return "No files found";
         }
