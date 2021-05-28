@@ -1,20 +1,18 @@
+# Description
+Parallel computing course work Program for building the inverted index of .txt files.
+Inverted index is a database index storing a mapping from content, such as words or numbers, to its locations in a table, or in a document or a set of documents
 
 
-# Prerequisites
+# Requirements
 JDK 11 and JRE 11
 
-IntelliJ IDEA (not mandatory)
 
 # Instalation and running
 Command line option
 
-1. git init
-2. git clone https://github.com/swat121/Course_work_PO.git
-3. cd course_work_parallel_computing
-4. javac -sourcepath ./src -d bin src/com/company/Main.java src/com/company/Client.java src/com/company/Client2.java
-5. java -classpath ./bin com.company.Main.java
-6. Follow the instructions
-
-# Contacts
-
-Kuscgovyi Denis KPI IASA DA-81
+1. git clone https://github.com/swat121/Course_work_PO.git
+2. cd Course_work_PO
+3. in root directory (Course_work_PO) create a dataset folder with files
+4. javac -sourcepath ./src -d bin src/com/company/*.java
+5. in root directory (Course_work_PO) java -classpath ./bin com.company.Server
+6. in root directory (Course_work_PO) java -classpath ./bin com.company.Client
