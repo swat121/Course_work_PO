@@ -18,9 +18,8 @@ import java.util.stream.Collectors;
 public class IndexService {
     private static final List<String> stopWords = readStopWords();
     private static ConcurrentHashMap<String, List<Integer>> index = new ConcurrentHashMap<>();
-    private static final String stopWordsPath = "stop_words_list.txt";
     private static final String datasetDirectoryPath = "dataset";
-    private static final int NUMBER_THREADS =1;
+    private static final int NUMBER_THREADS =4;
     private static List<File> filePath = new ArrayList<>();
 
     public void runBuild() throws IOException, InterruptedException {

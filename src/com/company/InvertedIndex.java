@@ -6,18 +6,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InvertedIndex{
-
-    List<Integer> wordFiles;
-//    File filePath;
-//    List<String> stopWords;
-//
-//    InvertedIndex(File filePath, List<String> stopWords) {
-//        this.filePath = filePath;
-//        this.stopWords = stopWords;
-//    }
+    private List<Integer> wordFiles;
 
     public void buildIndex(File filePath, List<String> stopWords, int fileNumber,ConcurrentHashMap<String, List<Integer>> index) {
-            //int fileNumber = filePath.indexOf(filePath.get(i));
             int wordCounter = 0;
             BufferedReader reader = null;
             try {
@@ -37,20 +28,16 @@ public class InvertedIndex{
                             continue;
                         if (!index.containsKey(word)) {
                             wordFiles = new ArrayList<>();
-                            //Слово с соответствующим пустым списком файлов
                             index.put(word, wordFiles);
                         } else {
                             wordFiles = index.get(word);
                         }
-                        //добавляем текущий файл к слову word
                         wordFiles.add(fileNumber);
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //System.out.println("filename " + filePath + " " + wordCounter + " words");
-
         }
 
     }
