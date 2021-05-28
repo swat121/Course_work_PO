@@ -5,27 +5,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InvertedIndex extends Thread{
-    List<Integer> indexData;
-    int startIndex;
-    int endIndex;
-    List<File> filesInFolder;
+    int startFileIndex;
+    int endFileIndex;
+    List<Integer> wordFiles;
+    List<File> filePath;
     List<String> stopWords;
 
-    InvertedIndex(List<File> filesInFolder, int startIndex, int endIndex, List<String> stopWords) {
-        this.startIndex = startIndex;
-        this.endIndex = endIndex;
-        this.filesInFolder = filesInFolder;
+    InvertedIndex(List<File> filePath, int startFileIndex, int endFileIndex, List<String> stopWords) {
+        this.startFileIndex = startFileIndex;
+        this.endFileIndex = endFileIndex;
+        this.filePath = filePath;
         this.stopWords = stopWords;
     }
 
     public void run() {
 
-        for (int i = startIndex; i < endIndex; i++) {
-            int fileNumber = filesInFolder.indexOf(filesInFolder.get(i));
+        for (int i = startFileIndex; i < endFileIndex; i++) {
+            int fileNumber = filePath.indexOf(filePath.get(i));
             int wordCounter = 0;
             BufferedReader reader = null;
             try {
-                reader = new BufferedReader(new FileReader(filesInFolder.get(i)));
+                reader = new BufferedReader(new FileReader(filePath.get(i)));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -34,26 +34,26 @@ public class InvertedIndex extends Thread{
                     line = line.replaceAll("<.*?>", "")
                             .replaceAll("[^A-Za-z\\s]", "")
                             .replaceAll(" +", " ");
-                    for (String wordHigh : line.split("\\W+")) {
+                    for (String rawWords : line.split("\\W+")) {
                         wordCounter++;
-                        String word = wordHigh.toLowerCase();
+                        String word = rawWords.toLowerCase();
                         if (stopWords.contains(word))
                             continue;
                         if (!Server.index.containsKey(word)) {
-                            indexData = new ArrayList<>();
+                            wordFiles = new ArrayList<>();
                             //Слово с соответствующим пустым списком файлов
-                            Server.index.put(word, indexData);
+                            Server.index.put(word, wordFiles);
                         } else {
-                            indexData = Server.index.get(word);
+                            wordFiles = Server.index.get(word);
                         }
                         //добавляем текущий файл к слову word
-                        indexData.add(fileNumber);
+                        wordFiles.add(fileNumber);
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("filename " + filesInFolder.get(i) + " " + wordCounter + " words");
+            System.out.println("filename " + filePath.get(i) + " " + wordCounter + " words");
         }
     }
 }
