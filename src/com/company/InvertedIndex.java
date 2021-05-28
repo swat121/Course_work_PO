@@ -3,29 +3,25 @@ package com.company;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class InvertedIndex extends Thread{
-    int startFileIndex;
-    int endFileIndex;
+public class InvertedIndex{
+
     List<Integer> wordFiles;
-    List<File> filePath;
-    List<String> stopWords;
+//    File filePath;
+//    List<String> stopWords;
+//
+//    InvertedIndex(File filePath, List<String> stopWords) {
+//        this.filePath = filePath;
+//        this.stopWords = stopWords;
+//    }
 
-    InvertedIndex(List<File> filePath, int startFileIndex, int endFileIndex, List<String> stopWords) {
-        this.startFileIndex = startFileIndex;
-        this.endFileIndex = endFileIndex;
-        this.filePath = filePath;
-        this.stopWords = stopWords;
-    }
-
-    public void run() {
-
-        for (int i = startFileIndex; i < endFileIndex; i++) {
-            int fileNumber = filePath.indexOf(filePath.get(i));
+    public void buildIndex(File filePath, List<String> stopWords, int fileNumber,ConcurrentHashMap<String, List<Integer>> index) {
+            //int fileNumber = filePath.indexOf(filePath.get(i));
             int wordCounter = 0;
             BufferedReader reader = null;
             try {
-                reader = new BufferedReader(new FileReader(filePath.get(i)));
+                reader = new BufferedReader(new FileReader(filePath));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -39,12 +35,12 @@ public class InvertedIndex extends Thread{
                         String word = rawWords.toLowerCase();
                         if (stopWords.contains(word))
                             continue;
-                        if (!Server.index.containsKey(word)) {
+                        if (!index.containsKey(word)) {
                             wordFiles = new ArrayList<>();
                             //Слово с соответствующим пустым списком файлов
-                            Server.index.put(word, wordFiles);
+                            index.put(word, wordFiles);
                         } else {
-                            wordFiles = Server.index.get(word);
+                            wordFiles = index.get(word);
                         }
                         //добавляем текущий файл к слову word
                         wordFiles.add(fileNumber);
@@ -53,7 +49,9 @@ public class InvertedIndex extends Thread{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("filename " + filePath.get(i) + " " + wordCounter + " words");
+            //System.out.println("filename " + filePath + " " + wordCounter + " words");
+
         }
+
     }
-}
+
